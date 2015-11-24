@@ -1,0 +1,9 @@
+{
+	"default_time": {
+		"module": "time"
+	},
+	"test_default_time": {
+		"module": "time"
+	}
+
+}
