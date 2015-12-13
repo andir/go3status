@@ -5,6 +5,7 @@ import (
 	"fmt"
 	modules "github.com/andir/go3status/modules"
 	go3_battery "github.com/andir/go3status/modules/battery"
+	go3_idlerpg "github.com/andir/go3status/modules/idlerpg"
 	go3_mpd "github.com/andir/go3status/modules/mpd"
 	go3_net "github.com/andir/go3status/modules/net"
 	go3_time "github.com/andir/go3status/modules/time"
@@ -143,6 +144,7 @@ func main() {
 	mods["net"] = go3_net.Module
 	mods["mpd"] = go3_mpd.Module
 	mods["battery"] = go3_battery.Module
+	mods["idlerpg"] = go3_idlerpg.Module
 	var config string
 
 	if len(os.Args) > 1 {
@@ -154,6 +156,14 @@ func main() {
 	} else {
 		config = `
 {
+	"idlerpg-andi": {
+		"module": "idlerpg",
+		"player": "andi-"
+	},
+	"idlerpg-hexa": {
+		"module": "idlerpg",
+		"player": "hexa"
+	},
 	"local_mpd": {
 		"module": "mpd",
 		"format": "MPD: [{{ .State }}] {{ .Artist }} - {{ .Title }}"

@@ -188,10 +188,12 @@ func CreateInstance(name string, config map[string]interface{}) (instance module
 	if v, ok := config["format"]; ok {
 		format = v.(string)
 	} else {
-		format = `{{.Name}}: {{printf "%.1f" .Percentage}} %`
+		format = `{{.Name}}: {{printf "%.1f" .Percentage}} % {{ if Equal .Status "Charging" }}⚇{{ end }}`
 	}
 
-	if tmpl, err := template.New(name).Parse(format); err == nil {
+	if tmpl, err := template.New(name).Funcs(template.FuncMap{
+		"Equal": strings.EqualFold,
+	}).Parse(format); err == nil {
 		batteryInstance.template = tmpl
 	} else {
 		log.Error(err.Error())
