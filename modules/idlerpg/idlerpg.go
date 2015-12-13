@@ -35,6 +35,10 @@ type IRPGInstance struct {
 	config      map[string]interface{}
 }
 
+func (i IRPGInstance) RefreshInterval() int {
+	return 900
+}
+
 func (t IRPGInstance) Name() (n string) {
 	n = t.name
 	return

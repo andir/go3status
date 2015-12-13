@@ -34,6 +34,10 @@ type BatteryInstance struct {
 	template    *template.Template
 }
 
+func (i BatteryInstance) RefreshInterval() int {
+	return 5
+}
+
 func (i BatteryInstance) Name() string {
 	return i.name
 }

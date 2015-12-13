@@ -32,6 +32,10 @@ type NetInstance struct {
 	config         map[string]interface{}
 }
 
+func (t NetInstance) RefreshInterval() int {
+	return 5
+}
+
 func (t NetInstance) Name() (n string) {
 	n = t.name
 	return

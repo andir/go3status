@@ -35,6 +35,10 @@ type MPDInstance struct {
 	template  *template.Template
 }
 
+func (m MPDInstance) RefreshInterval() int {
+	return 5
+}
+
 func (m MPDInstance) Name() string {
 	return m.name
 }

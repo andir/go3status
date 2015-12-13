@@ -85,11 +85,30 @@ func parseConfig(config string, mods map[string]modules.Module) (instances []mod
 	return
 }
 
+type CacheEntry struct {
+	ts   time.Time
+	item modules.Item
+}
+
+var cache = make(map[string]CacheEntry)
+
 func render(instances []modules.ModuleInstance) {
 	s := []string{}
 	for _, instance := range instances {
-		log.Info(instance.Name())
-		item := instance.Render()
+		name := instance.Name()
+		log.Info(name)
+		var item modules.Item
+		if v, ok := cache[name]; ok {
+			if int(time.Since(v.ts).Seconds()) >= instance.RefreshInterval() {
+				item = instance.Render()
+				cache[name] = CacheEntry{ts: time.Now(), item: item}
+			} else {
+				item = v.item
+			}
+		} else {
+			item = instance.Render()
+			cache[name] = CacheEntry{ts: time.Now(), item: item}
+		}
 		if item != nil {
 			s = append(s, string(item.Marshal()))
 		} else {
@@ -204,6 +223,6 @@ func main() {
 			}
 		}(run)
 
-		mainLoop(5, instances, run)
+		mainLoop(1, instances, run)
 	}
 }
