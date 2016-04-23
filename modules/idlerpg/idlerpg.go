@@ -98,7 +98,7 @@ func (t IRPGInstance) downloadData() (p *Player) {
 	player := new(Player)
 	log.Debug("Downloading " + t.uri)
 	if resp, err := http.Get(t.uri); err != nil {
-		log.Fatal(err)
+		//log.Fatal(err) // causes crashes
 		p = nil
 		return
 	} else {
