@@ -10,6 +10,7 @@ import (
 	go3_net "github.com/andir/go3status/modules/net"
 	go3_time "github.com/andir/go3status/modules/time"
 	go3_load "github.com/andir/go3status/modules/load"
+	go3_memory "github.com/andir/go3status/modules/memory"
 	"github.com/op/go-logging"
 	"io/ioutil"
 	"os"
@@ -166,6 +167,7 @@ func main() {
 	mods["battery"] = go3_battery.Module
 	mods["idlerpg"] = go3_idlerpg.Module
 	mods["load"] = go3_load.Module
+	mods["memory"] = go3_memory.Module
 	var config string
 
 	if len(os.Args) > 1 {
@@ -190,6 +192,9 @@ func main() {
 	},
 	"default_load": {
 		"module": "load"
+	},
+	"default_memory": {
+		"module": "memory"
 	}
 }`
 	}
