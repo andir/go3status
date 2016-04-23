@@ -9,6 +9,7 @@ import (
 	go3_mpd "github.com/andir/go3status/modules/mpd"
 	go3_net "github.com/andir/go3status/modules/net"
 	go3_time "github.com/andir/go3status/modules/time"
+	go3_load "github.com/andir/go3status/modules/load"
 	"github.com/op/go-logging"
 	"io/ioutil"
 	"os"
@@ -164,6 +165,7 @@ func main() {
 	mods["mpd"] = go3_mpd.Module
 	mods["battery"] = go3_battery.Module
 	mods["idlerpg"] = go3_idlerpg.Module
+	mods["load"] = go3_load.Module
 	var config string
 
 	if len(os.Args) > 1 {
@@ -175,21 +177,9 @@ func main() {
 	} else {
 		config = `
 {
-	"idlerpg-andi": {
-		"module": "idlerpg",
-		"player": "andi-"
-	},
-	"idlerpg-hexa": {
-		"module": "idlerpg",
-		"player": "hexa"
-	},
-	"local_mpd": {
-		"module": "mpd",
-		"format": "MPD: [{{ .State }}] {{ .Artist }} - {{ .Title }}"
-	},
-	"wireless_network": {
+		"wireless_network": {
 		"module": "net",
-		"interface_name": "wlp4s0",
+		"interface_name": "wlp3s0",
 		"format": "<span color=\"{{ if .Up }}green{{ else }}red{{end}}\">{{.Interface_name}}</span>: {{range $i, $v := .Addresses}}{{if $i}}, {{end}}{{$v}}{{end}}"
 	},
 	"default_time": {
@@ -197,9 +187,22 @@ func main() {
 	},
 	"default_battery": {
 		"module": "battery"
+	},
+	"default_load": {
+		"module": "load"
 	}
 }`
 	}
+
+//"idlerpg-andi": {
+//		"module": "idlerpg",
+//		"player": "andi-"
+//	},
+//	"idlerpg-hexa": {
+//		"module": "idlerpg",	//	"local_mpd": {
+//		"player": "hexa"    //		"module": "mpd",
+//	},                          //		"format": "MPD: [{{ .State }}] {{ .Artist }} - {{ .Title }}"
+//	},
 	instances := parseConfig(config, mods)
 	if len(instances) == 0 {
 		log.Error("No instances configured, exiting.")
@@ -223,6 +226,6 @@ func main() {
 			}
 		}(run)
 
-		mainLoop(1, instances, run)
+		mainLoop(2, instances, run)
 	}
 }
