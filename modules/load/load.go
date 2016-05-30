@@ -1,19 +1,21 @@
 package load
 
 import (
+	"bytes"
 	"encoding/json"
+	"runtime"
+	"text/template"
+
 	"github.com/andir/go3status/modules"
 	"github.com/op/go-logging"
 	load "github.com/shirou/gopsutil/load"
-	"text/template"
-	"bytes"
 )
 
 var log = logging.MustGetLogger("go3status.load")
 
 type LoadInstance struct {
-	name   string
-	format string
+	name     string
+	format   string
 	template *template.Template
 }
 
@@ -26,10 +28,6 @@ func (t LoadInstance) Name() (n string) {
 	return
 }
 
-//func (t LoadInstance) Config() (m map[string]interface{}) {
-//	return
-//}
-
 func (t LoadInstance) String() (s string) {
 	s = t.Name()
 	return
@@ -41,8 +39,8 @@ func (t LoadInstance) Render() (item modules.Item) {
 }
 
 type LoadItem struct {
-	Name string `json:"name"`
-	Text string `json:"full_text"`
+	Name   string `json:"name"`
+	Text   string `json:"full_text"`
 	Markup string `json:"markup"`
 }
 
@@ -57,7 +55,6 @@ func (e LoadItem) Marshal() (bytes []byte) {
 type RenderContext struct {
 	Load5, Load10, Load15 float32
 }
-
 
 func GetRenderContext() *load.AvgStat {
 	if avg, err := load.Avg(); err == nil {
@@ -86,24 +83,24 @@ func RenderInstance(i modules.ModuleInstance) (t modules.Item) {
 
 	f := formatted.String()
 	log.Debug(f)
-	t = modules.Item(LoadItem{Name: instance.name, Text: f, Markup:"pango"})
+	t = modules.Item(LoadItem{Name: instance.name, Text: f, Markup: "pango"})
 
 	return
 }
 
 func color(value float64) string {
-	numprocs := 4.0
+	numprocs := float64(runtime.NumCPU()) / 2
 	switch {
-		case value < 0.5 * numprocs:
-			return "grey"
-		case value >= 0.5 * numprocs && value < 1.5 * numprocs:
-			return "#D9FF00"
-		case value >= 1.5 * numprocs && value < 2 * numprocs:
-			return "yellow"
-		case value >= 2 * numprocs && value < 4 * numprocs:
-			return "orange"
-		case value >= 4 * numprocs:
-			return "red"
+	case value < 0.5*numprocs:
+		return "grey"
+	case value >= 0.5*numprocs && value < 1.5*numprocs:
+		return "#D9FF00"
+	case value >= 1.5*numprocs && value < 2*numprocs:
+		return "yellow"
+	case value >= 2*numprocs && value < 4*numprocs:
+		return "orange"
+	case value >= 4*numprocs:
+		return "red"
 	}
 	return ""
 }
@@ -124,8 +121,8 @@ func CreateInstance(name string, config map[string]interface{}) (m modules.Modul
 	}
 
 	if template, err := template.New(name).Funcs(template.FuncMap{
-			"color": color,
-		}).Parse(format); err == nil {
+		"color": color,
+	}).Parse(format); err == nil {
 		f.template = template
 	} else {
 		log.Error("failed to create template: " + err.Error())
