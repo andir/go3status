@@ -213,7 +213,7 @@ func main() {
 		"module": "load"
 	},
 	{
-		"name": "default_load",
+		"name": "default_memory",
 		"module": "memory"
 	}
 ]`
