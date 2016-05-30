@@ -3,21 +3,22 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	modules "github.com/andir/go3status/modules"
-	go3_battery "github.com/andir/go3status/modules/battery"
-	go3_idlerpg "github.com/andir/go3status/modules/idlerpg"
-	go3_mpd "github.com/andir/go3status/modules/mpd"
-	go3_net "github.com/andir/go3status/modules/net"
-	go3_time "github.com/andir/go3status/modules/time"
-	go3_load "github.com/andir/go3status/modules/load"
-	go3_memory "github.com/andir/go3status/modules/memory"
-	"github.com/op/go-logging"
 	"io/ioutil"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
 	"time"
+
+	modules "github.com/andir/go3status/modules"
+	go3_battery "github.com/andir/go3status/modules/battery"
+	go3_idlerpg "github.com/andir/go3status/modules/idlerpg"
+	go3_load "github.com/andir/go3status/modules/load"
+	go3_memory "github.com/andir/go3status/modules/memory"
+	go3_mpd "github.com/andir/go3status/modules/mpd"
+	go3_net "github.com/andir/go3status/modules/net"
+	go3_time "github.com/andir/go3status/modules/time"
+	"github.com/op/go-logging"
 )
 
 var log = logging.MustGetLogger("go3status")
@@ -41,16 +42,27 @@ func setupLogging() {
 	logging.SetBackend(backendFormatter)
 }
 
-func parseModuleConfig(name string, moduleConfig map[string]interface{}, mods map[string]modules.Module) (instance modules.ModuleInstance) {
+func parseModuleConfig(moduleConfig map[string]interface{}, mods map[string]modules.Module) (instance modules.ModuleInstance) {
 	var mod modules.Module
 	var ok bool
 	var val interface{}
-	val, ok = moduleConfig["module"]
+	var name string
+
+	val, ok = moduleConfig["name"]
 	if !ok {
-		//err = error()
+		log.Fatal("Failed to read name of module")
+		return
+	}
+	name = val.(string)
+
+	val, ok = moduleConfig["module"]
+
+	if !ok {
+		log.Fatal("Failed to parse config")
 		return
 	}
 	modname := val.(string)
+
 	log.Debug("module:" + string(modname))
 
 	if mod, ok = mods[modname]; !ok {
@@ -62,25 +74,28 @@ func parseModuleConfig(name string, moduleConfig map[string]interface{}, mods ma
 	return
 }
 
-func parseConfig(config string, mods map[string]modules.Module) (instances []modules.ModuleInstance) {
-	var m map[string]interface{}
+func reverseArray(a []modules.ModuleInstance) {
+	for i := len(a)/2 - 1; i >= 0; i-- {
+		opp := len(a) - 1 - i
+		a[i], a[opp] = a[opp], a[i]
+	}
+}
 
-	if err := json.Unmarshal([]byte(config), &m); err == nil {
-		for key, value := range m {
-			log.Debug(key)
-			switch value.(type) {
-			case map[string]interface{}:
-				instance := parseModuleConfig(key, value.(map[string]interface{}), mods)
-				if instance != nil {
-					log.Debug("Created instance:", instance.String())
-					instances = append(instances, instance)
-				} else {
-					log.Debug("Failed to parse config for ", key)
-				}
-			default:
-				log.Error("Failed to parse " + key)
+func parseConfig(config string, mods map[string]modules.Module) (instances []modules.ModuleInstance) {
+	var list []map[string]interface{}
+
+	if err := json.Unmarshal([]byte(config), &list); err == nil {
+		for _, element := range list {
+			instance := parseModuleConfig(element, mods)
+			if instance != nil {
+				log.Debug("Created instance:", instance.String())
+				instances = append(instances, instance)
+			} else {
+				log.Debug("Failed to parse config for ", element)
 			}
 		}
+		// since we can't insert at the back we've to reverse the order
+		reverseArray(instances)
 	} else {
 		log.Error(err.Error())
 	}
@@ -178,36 +193,47 @@ func main() {
 		}
 	} else {
 		config = `
-{
-		"wireless_network": {
+[
+	{
+		"name": "default_time",
+		"module": "time"
+	},
+	{
+		"name": "default_battery",
+		"module": "battery"
+	},
+	{ 
+		"name":"wireless_network",
 		"module": "net",
 		"interface_name": "wlp3s0",
 		"format": "<span color=\"{{ if .Up }}green{{ else }}red{{end}}\">{{.Interface_name}}</span>: {{range $i, $v := .Addresses}}{{if $i}}, {{end}}{{$v}}{{end}}"
 	},
-	"default_time": {
-		"module": "time"
-	},
-	"default_battery": {
-		"module": "battery"
-	},
-	"default_load": {
+	{
+		"name": "default_load",
 		"module": "load"
 	},
-	"default_memory": {
+	{
+		"name": "default_load",
 		"module": "memory"
 	}
-}`
+]`
 	}
 
-//"idlerpg-andi": {
-//		"module": "idlerpg",
-//		"player": "andi-"
-//	},
-//	"idlerpg-hexa": {
-//		"module": "idlerpg",	//	"local_mpd": {
-//		"player": "hexa"    //		"module": "mpd",
-//	},                          //		"format": "MPD: [{{ .State }}] {{ .Artist }} - {{ .Title }}"
-//	},
+	//	{
+	//		"name": "idlerpg-andi",
+	//		"module": "idlerpg",
+	//		"player": "andi-"
+	//	},
+	//	{
+	//		"name": "idlerpg-hexa",
+	//		"module": "idlerpg",
+	//		"player": "hexa"
+	//	},
+	// {
+	//		"name": "local_mpd",
+	//		"module": "mpd",
+	//		"format": "MPD: [{{ .State }}] {{ .Artist }} - {{ .Title }}"
+	// }
 	instances := parseConfig(config, mods)
 	if len(instances) == 0 {
 		log.Error("No instances configured, exiting.")
