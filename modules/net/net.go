@@ -29,7 +29,8 @@ type NetInstance struct {
 	name           string
 	interface_name string
 	template       *template.Template
-	config         map[string]interface{}
+//	config         map[string]interface{}
+	ignore_local     bool
 }
 
 func (t NetInstance) RefreshInterval() int {
@@ -41,10 +42,10 @@ func (t NetInstance) Name() (n string) {
 	return
 }
 
-func (t NetInstance) Config() (m map[string]interface{}) {
-	m = t.config
-	return
-}
+//func (t NetInstance) Config() (m map[string]interface{}) {
+//	m = t.config
+//	return
+//}
 
 func (t NetInstance) String() (s string) {
 	s = t.Name()
@@ -80,9 +81,10 @@ func (t NetInstance) Render() (i modules.Item) {
 		if addrs, err := iface.Addrs(); err == nil && addrs != nil {
 			for _, addr := range addrs {
 				if ip, _, err := go_net.ParseCIDR(addr.String()); err == nil {
-					if !linkLocalv6.Contains(ip) && !privatev6.Contains(ip) {
-						formatData.Addresses = append(formatData.Addresses, addr.String())
+					if (t.ignore_local) && (linkLocalv6.Contains(ip) || privatev6.Contains(ip)) {
+						continue
 					}
+					formatData.Addresses = append(formatData.Addresses, addr.String())
 				}
 			}
 		}
@@ -99,6 +101,7 @@ func (t NetInstance) Render() (i modules.Item) {
 func CreateInstance(name string, config map[string]interface{}) (moduleInstance modules.ModuleInstance) {
 	i := NetInstance{
 		name: name,
+		ignore_local: true,
 	}
 
 	if v, ok := config["interface_name"]; ok {
@@ -110,6 +113,14 @@ func CreateInstance(name string, config map[string]interface{}) (moduleInstance 
 		moduleInstance = nil
 		return
 	}
+
+	if v, ok := config["ignore_local"]; ok {
+		val, okayish := v.(bool)
+		if okayish {
+			i.ignore_local = val
+		}
+	}
+
 	var format string
 	if v, ok := config["format"]; ok {
 		format = v.(string)
