@@ -1,6 +1,24 @@
-{
-	{ 
+[
+	{
 		"name": "default_time",
 		"module": "time"
+	},
+	{
+		"name": "default_battery",
+		"module": "battery"
+	},
+	{ 
+		"name":"wireless_network",
+		"module": "net",
+		"interface_name": "wlp3s0",
+		"format": "<span color=\"{{ if .Up }}green{{ else }}red{{end}}\">{{.Interface_name}}</span>: {{range $i, $v := .Addresses}}{{if $i}}, {{end}}{{$v}}{{end}}"
+	},
+	{
+		"name": "default_load",
+		"module": "load"
+	},
+	{
+		"name": "default_memory",
+		"module": "memory"
 	}
-}
+]
